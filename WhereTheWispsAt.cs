@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Vector3N = System.Numerics.Vector3;
 using Vector2N = System.Numerics.Vector2;
+using ExileCore.PoEMemory.Elements;
 
 namespace WhereTheWispsAt;
 
@@ -263,7 +264,20 @@ public class WhereTheWispsAt : BaseSettingsPlugin<WhereTheWispsAtSettings>
                     render.RotationNum.X
                 );
             }
-
+        if (Settings.DrawRemainingFuel)
+        {
+            if (!GameController.IngameState.Data.IsInsideAzmeriZone)
+            {
+                return;
+            }
+            var fuelLeft = inGameUi.LeagueMechanicButtons.AzmeriElement.Data.RemainingFuelFraction;
+            var fuelLeftText = $"{fuelLeft:P0}";
+            var textPlacement = new Vector2(Settings.PositionX, Settings.PositionY);
+            using (Graphics.SetTextScale(Settings.TextSize))
+            {
+                Graphics.DrawText(fuelLeftText, textPlacement, Settings.FuelColor);
+            }
+        }
         return;
 
 
