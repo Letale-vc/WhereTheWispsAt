@@ -26,10 +26,15 @@ public class WhereTheWispsAt : BaseSettingsPlugin<WhereTheWispsAtSettings>
         Altars,
         DustConverters,
         Dealer,
-        Encounter
+        Encounter,
+        Shrine,
+        Iron
     }
 
-    public WispData Wisps = new([], [], [], [], [], [], [], [], [], [], []);
+    public List<string> GoodShrines = new List<string>() { "Acceleration Shrine", "Diamond Shrine",
+    "Divine Shrine","Echoing Shrine", "Covetous Shrine"/*, "Impenetrable Shrine"*/};
+
+    public WispData Wisps = new([], [], [], [], [], [], [], [], [], [], [], [], []);
 
     public WhereTheWispsAt()
     {
@@ -77,6 +82,20 @@ public class WhereTheWispsAt : BaseSettingsPlugin<WhereTheWispsAtSettings>
         var path = entity.TryGetComponent<Animated>(out var animatedComp) ? animatedComp?.BaseAnimatedObjectEntity?.Path
             : null;
 
+        //if (entity.Metadata.Contains("Volatile"))
+        //{
+        //    LogMessage($"Volatile");
+        //    foreach (var item in entity.Stats)
+        //    {
+        //        LogMessage($"{item.Key} - {item.Value}");
+        //    }
+        //    LogMessage($"Buffs");
+        //    foreach (var item in entity.Buffs)
+        //    {
+        //        LogMessage($"{item.DisplayName} - {item.Name}");
+        //    }
+        //}
+
         var metadata = entity.Metadata;
 
         switch (metadata)
@@ -105,6 +124,7 @@ public class WhereTheWispsAt : BaseSettingsPlugin<WhereTheWispsAtSettings>
             case "Metadata/MiscellaneousObjects/Azmeri/AzmeriFuelResupply":
                 Wisps.FuelRefill.Add(entity);
                 break;
+            case "Metadata/Terrain/Leagues/Lake/Objects/CraftingObjectRandom":
             case "Metadata/MiscellaneousObjects/Azmeri/AzmeriFlaskRefill":
                 Wisps.Wells.Add(entity);
                 break;
@@ -138,7 +158,10 @@ public class WhereTheWispsAt : BaseSettingsPlugin<WhereTheWispsAtSettings>
             case "Metadata/Chests/LeagueAzmeri/OmenChest":
                 Wisps.Encounters[entity] = "Omen Chest";
                 break;
-            case not null when metadata.Contains("Azmeri/SacrificeAltarObjects"):
+            //case not null when metadata.Contains("Azmeri/SacrificeAltarObjects"):
+            case "Metadata/MiscellaneousObjects/Azmeri/SacrificeAltarObjects/AzmeriSacrificeAltarBear":
+            case "Metadata/MiscellaneousObjects/Azmeri/SacrificeAltarObjects/AzmeriSacrificeAltarRabbit":
+            case "Metadata/MiscellaneousObjects/Azmeri/SacrificeAltarObjects/AzmeriSacrificeAltarDeer":
                 Wisps.Altars.Add(entity);
                 break;
             case not null when metadata.Contains("Azmeri/AzmeriDustConverter"):
@@ -149,6 +172,15 @@ public class WhereTheWispsAt : BaseSettingsPlugin<WhereTheWispsAtSettings>
                 break;
             case not null when metadata.StartsWith("Metadata/Chests/LeagueAzmeri/"):
                 Wisps.Chests.Add(entity);
+                break;
+            case "Metadata/Shrines/Shrine":
+                if (GoodShrines.Contains(entity.RenderName))
+                {
+                    Wisps.Shrines.Add(entity);
+                }
+                break;
+            case "Metadata/Terrain/Leagues/Settlers/Node/Objects/NodeTypes/CrimsonIron":
+                Wisps.Irons.Add(entity);
                 break;
         }
     }
@@ -175,7 +207,7 @@ public class WhereTheWispsAt : BaseSettingsPlugin<WhereTheWispsAtSettings>
     }
 
     public override void AreaChange(AreaInstance area) =>
-        Wisps = new WispData([], [], [], [], [], [], [], [], [], [], []);
+        Wisps = new WispData([], [], [], [], [], [], [], [], [], [], [], [], []);
 
     public override void Render()
     {
@@ -207,7 +239,10 @@ public class WhereTheWispsAt : BaseSettingsPlugin<WhereTheWispsAtSettings>
                      (Wisps.FuelRefill, Settings.FuelRefill, 0, "Fuel Refill", WispType.FuelRefill),
                      (Wisps.Altars, Settings.Altars, 0, "Altar", WispType.Altars),
                      (Wisps.DustConverters, Settings.DustConverters, 0, "Dust Converter", WispType.DustConverters),
-                     (Wisps.Dealer, Settings.Dealer, 0, "! TRADER !", WispType.Dealer)
+                     (Wisps.Dealer, Settings.Dealer, 0, "! TRADER !", WispType.Dealer),
+                     (Wisps.Shrines.Where(s=>!s.RenderName.Contains("Covetous")&&s.IsTargetable).ToList(), Settings.BlueWisp, 0, "Shrine", WispType.Shrine),
+                     (Wisps.Shrines.Where(s=>s.RenderName.Contains("Covetous")&&s.IsTargetable).ToList(), Settings.Dealer, 0, $"COVETOUS", WispType.Shrine),
+                      (Wisps.Irons, Settings.Altars, 0, "CRIMSON", WispType.Iron),
                  })
             DrawWisps(list, color, size, text, type);
 
@@ -231,6 +266,7 @@ public class WhereTheWispsAt : BaseSettingsPlugin<WhereTheWispsAtSettings>
 
         return;
 
+
         void DrawWisps(List<Entity> entityList, Color color, int size, string text, WispType type = WispType.None)
         {
             // Just run this once, land looks flat.
@@ -249,12 +285,51 @@ public class WhereTheWispsAt : BaseSettingsPlugin<WhereTheWispsAtSettings>
 
             for (var i = 0; i < entityList.Count; i++)
             {
+
                 var specificWispTypes = new[]
                 {
                     WispType.Yellow, WispType.Purple, WispType.Blue, WispType.LightBomb, WispType.FuelRefill
                 };
 
+                var actualWispTypes = new[] { WispType.Yellow, WispType.Purple, WispType.Blue,
+                };
+
+
                 var entityCur = entityList[i];
+
+                if (entityCur.IsTransitioned)
+                {
+                    continue;
+                }
+                var actualSize = size;
+                WispSize wispSize = new WispSize() { Size=0};
+                if (actualWispTypes.Contains(type))
+                {
+                    var newSize = entityCur.GetHudComponent<WispSize>();
+                    if (newSize != null)
+                    {
+                        wispSize.Size = newSize.Size;
+                    }
+                    else
+                    {
+                        var c = entityCur.GetComponent<Animated>()?.BaseAnimatedObjectEntity?.Metadata;
+                       
+                        if (c?.Contains("sml") ?? false)
+                        {
+                            wispSize.Size = 0;
+                        }
+                        else if (c?.Contains("med") ?? false)
+                        {
+                            wispSize.Size = 2;
+                        }
+                        else if (c?.Contains("big") ?? false)
+                        {
+                            wispSize.Size = 4;
+                        }
+                        entityCur.SetHudComponent(wispSize);
+                    }
+                    actualSize += wispSize.Size;
+                }
 
                 if (Settings.DrawMap && GameController.IngameState.IngameUi.Map.LargeMap.IsVisibleLocal)
                 {
@@ -293,11 +368,12 @@ public class WhereTheWispsAt : BaseSettingsPlugin<WhereTheWispsAtSettings>
                             }
                         }
 
-                        Graphics.DrawBox(
-                            new RectangleF(mapPos.X - size / 2, mapPos.Y - size / 2, size, size),
-                            color,
-                            1f
-                        );
+                        Graphics.DrawCircleFilled(mapPos, actualSize, color, 8);
+                        //.DrawBox(
+                        //    new RectangleF(mapPos.X - actualSize / 2, mapPos.Y - actualSize / 2, actualSize, actualSize),
+                        //    color,
+                        //    1f
+                        //);
                     }
                 }
 
@@ -355,5 +431,7 @@ public class WhereTheWispsAt : BaseSettingsPlugin<WhereTheWispsAtSettings>
         List<Entity> DustConverters,
         List<Entity> Dealer,
         List<Entity> Chests,
-        Dictionary<Entity, string> Encounters);
+        Dictionary<Entity, string> Encounters,
+        List<Entity> Shrines,
+        List<Entity> Irons);
 }
