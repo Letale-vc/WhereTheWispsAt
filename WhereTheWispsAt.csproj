@@ -19,11 +19,11 @@
 
   <ItemGroup>
     <Reference Include="ExileCore">
-      <HintPath>..\PoEHelper-3.20.0-2\ExileCore.dll</HintPath>
+      <HintPath>$(exapipackage)\ExileCore.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="GameOffsets">
-      <HintPath>..\PoEHelper-3.20.0-2\GameOffsets.dll</HintPath>
+      <HintPath>$(exapipackage)\GameOffsets.dll</HintPath>
       <Private>False</Private>
     </Reference>
   </ItemGroup>

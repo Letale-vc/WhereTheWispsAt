@@ -1,4 +1,5 @@
-﻿using ExileCore;
+﻿using System;
+using ExileCore;
 using ExileCore.PoEMemory;
 using ExileCore.PoEMemory.Components;
 using ExileCore.PoEMemory.MemoryObjects;
@@ -33,9 +34,9 @@ public class WhereTheWispsAt : BaseSettingsPlugin<WhereTheWispsAtSettings>
     }
 
     public List<string> GoodShrines = new List<string>() { "Acceleration Shrine", "Diamond Shrine",
-    "Divine Shrine","Echoing Shrine", "Covetous Shrine"/*, "Impenetrable Shrine"*/};
+    "Divine Shrine","Echoing Shrine", "Covetous Shrine", "Impenetrable Shrine"};
 
-    public WispData Wisps = new([], [], [], [], [], [], [], [], [], [], [], [], []);
+    public WispData Wisps = new();
 
     public WhereTheWispsAt()
     {
@@ -46,6 +47,17 @@ public class WhereTheWispsAt : BaseSettingsPlugin<WhereTheWispsAtSettings>
 
     public override Job Tick()
     {
+
+        var fuelsToRemove = Wisps.FuelRefill.Where(fuel => fuel.TryGetComponent(out Animated animated) &&
+                                                           animated.BaseAnimatedObjectEntity != null
+                                                           && animated.BaseAnimatedObjectEntity.TryGetComponent(
+                                                               out AnimationController animationController) &&
+                                                           animationController.CurrentAnimationId == 2).ToList();
+        fuelsToRemove.ForEach(f=>RemoveEntityFromList(f,Wisps.FuelRefill));
+
+        var shrinesToRemove = Wisps.GoodShrines.Where(s => !s.IsTargetable).ToList();
+        shrinesToRemove.ForEach(s=>RemoveEntityFromList(s,Wisps.GoodShrines));
+        
         var wellsToRemove = Wisps.Wells.Where(
                                      well => well.TryGetComponent<StateMachine>(out var stateComp) &&
                                              stateComp?.States.Any(x => x.Name == "activated" && x.Value == 1) == true
@@ -163,6 +175,8 @@ public class WhereTheWispsAt : BaseSettingsPlugin<WhereTheWispsAtSettings>
             case "Metadata/MiscellaneousObjects/Azmeri/SacrificeAltarObjects/AzmeriSacrificeAltarBear":
             case "Metadata/MiscellaneousObjects/Azmeri/SacrificeAltarObjects/AzmeriSacrificeAltarRabbit":
             case "Metadata/MiscellaneousObjects/Azmeri/SacrificeAltarObjects/AzmeriSacrificeAltarDeer":
+                var name = metadata[(metadata.LastIndexOf('/')+1)..];
+                entity.SetHudComponent(name);
                 Wisps.Altars.Add(entity);
                 break;
             case not null when metadata.Contains("Azmeri/AzmeriDustConverter"):
@@ -175,9 +189,14 @@ public class WhereTheWispsAt : BaseSettingsPlugin<WhereTheWispsAtSettings>
                 Wisps.Chests.Add(entity);
                 break;
             case "Metadata/Shrines/Shrine":
+                entity.SetHudComponent(entity.RenderName);
                 if (GoodShrines.Contains(entity.RenderName))
                 {
-                    Wisps.Shrines.Add(entity);
+                    Wisps.GoodShrines.Add(entity);
+                }
+                else
+                {
+                    Wisps.BadShrines.Add(entity);
                 }
                 break;
             case "Metadata/Terrain/Leagues/Settlers/Node/Objects/NodeTypes/CrimsonIron":
@@ -208,7 +227,7 @@ public class WhereTheWispsAt : BaseSettingsPlugin<WhereTheWispsAtSettings>
     }
 
     public override void AreaChange(AreaInstance area) =>
-        Wisps = new WispData([], [], [], [], [], [], [], [], [], [], [], [], []);
+        Wisps = new WispData();
 
     public override void Render()
     {
@@ -238,11 +257,13 @@ public class WhereTheWispsAt : BaseSettingsPlugin<WhereTheWispsAtSettings>
                      (Wisps.LightBomb, Settings.LightBomb, 0, "Light Bomb", WispType.LightBomb),
                      (Wisps.Wells, Settings.Wells, 0, "Well", WispType.Wells),
                      (Wisps.FuelRefill, Settings.FuelRefill, 0, "Fuel Refill", WispType.FuelRefill),
-                     (Wisps.Altars, Settings.Altars, 0, "Altar", WispType.Altars),
+                     (Wisps.Altars, Settings.Altars, 0, string.Empty, WispType.Altars),
                      (Wisps.DustConverters, Settings.DustConverters, 0, "Dust Converter", WispType.DustConverters),
                      (Wisps.Dealer, Settings.Dealer, 0, "! TRADER !", WispType.Dealer),
-                     (Wisps.Shrines.Where(s=>!s.RenderName.Contains("Covetous")&&s.IsTargetable).ToList(), Settings.BlueWisp, 0, "Shrine", WispType.Shrine),
-                     (Wisps.Shrines.Where(s=>s.RenderName.Contains("Covetous")&&s.IsTargetable).ToList(), Settings.Dealer, 0, $"COVETOUS", WispType.Shrine),
+                     (Wisps.GoodShrines, Settings.BlueWisp, 0, string.Empty, WispType.Shrine),
+                     //(Wisps.BadShrines, Settings.Altars, 0, string.Empty, WispType.Shrine),
+
+                     //(Wisps.Shrines.Where(s=>s.RenderName.Contains("Covetous")&&s.IsTargetable).ToList(), Settings.Dealer, 0, $"COVETOUS", WispType.Shrine),
                       (Wisps.Irons, Settings.Altars, 0, "CRIMSON", WispType.Iron),
                  })
             DrawWisps(list, color, size, text, type);
@@ -288,6 +309,7 @@ public class WhereTheWispsAt : BaseSettingsPlugin<WhereTheWispsAtSettings>
                 ? GameController.IngameState.Data.GetTerrainHeightAt(gridPosNum) : 0;
 
             entityList = entityList.OrderBy(x => x.Id).ToList();
+            
 
             var screenSize = new RectangleF
             {
@@ -310,6 +332,11 @@ public class WhereTheWispsAt : BaseSettingsPlugin<WhereTheWispsAtSettings>
 
 
                 var entityCur = entityList[i];
+                var text2 = entityCur.GetHudComponent<string>();
+                if (text2 != null)
+                {
+                    text = entityCur.GetHudComponent<string>();
+                }
 
                 if (entityCur.IsTransitioned)
                 {
@@ -433,19 +460,29 @@ public class WhereTheWispsAt : BaseSettingsPlugin<WhereTheWispsAtSettings>
         return entityPos.X >= leftBound && entityPos.X <= rightBound && entityPos.Y >= topBound &&
                entityPos.Y <= bottomBound;
     }
+    
+    public bool HideEntity(Entity entity)
+    {
+        var hideEntity = GameController.PluginBridge.GetMethod<Func<Entity, bool>>("HideEntity");
+        //DebugWindow.LogMsg($"Is null: {hideEntity is null}");
+        return hideEntity?.Invoke(entity) ?? false;
+    }
 
-    public record WispData(
-        List<Entity> Purple,
-        List<Entity> Yellow,
-        List<Entity> Blue,
-        List<Entity> LightBomb,
-        List<Entity> Wells,
-        List<Entity> FuelRefill,
-        List<Entity> Altars,
-        List<Entity> DustConverters,
-        List<Entity> Dealer,
-        List<Entity> Chests,
-        Dictionary<Entity, string> Encounters,
-        List<Entity> Shrines,
-        List<Entity> Irons);
+    public class WispData
+    {
+        public List<Entity> Purple { get; } = new();
+        public List<Entity> Yellow { get; } = new();
+        public List<Entity> Blue { get; } = new();
+        public List<Entity> LightBomb { get; } = new();
+        public List<Entity> Wells { get; } = new();
+        public List<Entity> FuelRefill { get; } = new();
+        public List<Entity> Altars { get; } = new();
+        public List<Entity> DustConverters { get; } = new();
+        public List<Entity> Dealer { get; } = new();
+        public List<Entity> Chests { get; } = new();
+        public Dictionary<Entity, string> Encounters { get; } = new();
+        public List<Entity> GoodShrines { get; } = new();
+        public List<Entity> BadShrines { get; } = new();
+        public List<Entity> Irons { get; } = new();
+    }
 }
