@@ -1,14 +1,14 @@
 ﻿using ExileCore;
 using ExileCore.PoEMemory;
 using ExileCore.PoEMemory.Components;
+using ExileCore.PoEMemory.Elements;
 using ExileCore.PoEMemory.MemoryObjects;
 using ExileCore.Shared.Helpers;
 using SharpDX;
 using System.Collections.Generic;
 using System.Linq;
-using Vector3N = System.Numerics.Vector3;
 using Vector2N = System.Numerics.Vector2;
-using ExileCore.PoEMemory.Elements;
+using Vector3N = System.Numerics.Vector3;
 
 namespace WhereTheWispsAt;
 
@@ -18,8 +18,14 @@ public class WhereTheWispsAt : BaseSettingsPlugin<WhereTheWispsAtSettings>
     {
         None,
         Yellow,
+        YellowMed,
+        YellowBig,
         Purple,
+        PurpleMed,
+        PurpleBig,
         Blue,
+        BlueMed,
+        BlueBig,
         Chests,
         LightBomb,
         Wells,
@@ -30,7 +36,7 @@ public class WhereTheWispsAt : BaseSettingsPlugin<WhereTheWispsAtSettings>
         Encounter
     }
 
-    public WispData Wisps = new([], [], [], [], [], [], [], [], [], [], []);
+    public WispData Wisps = new([], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], []);
 
     public WhereTheWispsAt()
     {
@@ -85,17 +91,41 @@ public class WhereTheWispsAt : BaseSettingsPlugin<WhereTheWispsAtSettings>
             case not null when metadata.StartsWith("Metadata/MiscellaneousObjects/Azmeri/AzmeriResource"):
                 if (path != null)
                 {
-                    if (path.Contains("_primal"))
+                    if (path.Contains("_primal_sml"))
                     {
                         Wisps.Blue.Add(entity);
                     }
-                    else if (path.Contains("_warden"))
+                    else if (path.Contains("_primal_med"))
+                    {
+                        Wisps.BlueMed.Add(entity);
+                    }
+                    else if (path.Contains("_primal_big"))
+                    {
+                        Wisps.BlueBig.Add(entity);
+                    }
+                    else if (path.Contains("_warden_sml"))
                     {
                         Wisps.Yellow.Add(entity);
                     }
-                    else if (path.Contains("_vodoo"))
+                    else if (path.Contains("_warden_med"))
+                    {
+                        Wisps.YellowMed.Add(entity);
+                    }
+                    else if (path.Contains("_warden_big"))
+                    {
+                        Wisps.YellowBig.Add(entity);
+                    }
+                    else if (path.Contains("_vodoo_sml"))
                     {
                         Wisps.Purple.Add(entity);
+                    }
+                    else if (path.Contains("_vodoo_med"))
+                    {
+                        Wisps.PurpleMed.Add(entity);
+                    }
+                    else if (path.Contains("_vodoo_big"))
+                    {
+                        Wisps.PurpleBig.Add(entity);
                     }
                 }
 
@@ -158,7 +188,7 @@ public class WhereTheWispsAt : BaseSettingsPlugin<WhereTheWispsAtSettings>
     {
         new[]
             {
-                Wisps.Blue, Wisps.Purple, Wisps.Yellow, Wisps.LightBomb, Wisps.Wells, Wisps.FuelRefill
+                Wisps.Blue, Wisps.BlueMed, Wisps.BlueBig, Wisps.Purple, Wisps.PurpleMed, Wisps.PurpleBig, Wisps.Yellow, Wisps.YellowMed, Wisps.YellowBig, Wisps.LightBomb, Wisps.Wells, Wisps.FuelRefill
             }.ToList()
              .ForEach(list => RemoveEntityFromList(entity, list));
 
@@ -176,7 +206,7 @@ public class WhereTheWispsAt : BaseSettingsPlugin<WhereTheWispsAtSettings>
     }
 
     public override void AreaChange(AreaInstance area) =>
-        Wisps = new WispData([], [], [], [], [], [], [], [], [], [], []);
+        Wisps = new WispData([], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], []);
 
     public override void Render()
     {
@@ -200,8 +230,14 @@ public class WhereTheWispsAt : BaseSettingsPlugin<WhereTheWispsAtSettings>
         foreach (var (list, color, size, text, type) in new[]
                  {
                      (Wisps.Yellow, Settings.YellowWisp, Settings.YellowSize.Value, null, WispType.Yellow),
+                     (Wisps.YellowMed, Settings.YellowWispMed, Settings.YellowSizeMed.Value, null, WispType.YellowMed),
+                     (Wisps.YellowBig, Settings.YellowWispBig, Settings.YellowSizeBig.Value, null, WispType.YellowBig),
                      (Wisps.Purple, Settings.PurpleWisp, Settings.PurpleSize.Value, null, WispType.Purple),
+                     (Wisps.PurpleMed, Settings.PurpleWispMed, Settings.PurpleSizeMed.Value, null, WispType.PurpleMed),
+                     (Wisps.PurpleBig, Settings.PurpleWispBig, Settings.PurpleSizeBig.Value, null, WispType.PurpleBig),
                      (Wisps.Blue, Settings.BlueWisp, Settings.BlueSize.Value, null, WispType.Blue),
+                     (Wisps.BlueMed, Settings.BlueWispMed, Settings.BlueSizeMed.Value, null, WispType.BlueMed),
+                     (Wisps.BlueBig, Settings.BlueWispBig, Settings.BlueSizeBig.Value, null, WispType.BlueBig),
                      (Wisps.Chests, Settings.ChestColor, Settings.ChestSize.Value, null, WispType.Chests),
                      (Wisps.LightBomb, Settings.LightBomb, 0, "Light Bomb", WispType.LightBomb),
                      (Wisps.Wells, Settings.Wells, 0, "Well", WispType.Wells),
@@ -235,7 +271,7 @@ public class WhereTheWispsAt : BaseSettingsPlugin<WhereTheWispsAtSettings>
             {
                 return;
             }
-            var fuelLeft = inGameUi.LeagueMechanicButtons.AzmeriElement.Data.RemainingFuelFraction;
+            var fuelLeft = inGameUi.GameUI.AzmeriElement.Data.RemainingFuelFraction;
             var fuelLeftText = $"{fuelLeft:P0}";
             var textPlacement = new Vector2(Settings.PositionX, Settings.PositionY);
             using (Graphics.SetTextScale(Settings.TextSize))
@@ -265,7 +301,7 @@ public class WhereTheWispsAt : BaseSettingsPlugin<WhereTheWispsAtSettings>
             {
                 var specificWispTypes = new[]
                 {
-                    WispType.Yellow, WispType.Purple, WispType.Blue, WispType.LightBomb, WispType.FuelRefill
+                    WispType.Yellow, WispType.YellowMed, WispType.YellowBig, WispType.Purple, WispType.PurpleMed, WispType.PurpleBig, WispType.Blue, WispType.BlueMed, WispType.BlueBig, WispType.LightBomb, WispType.FuelRefill
                 };
 
                 var entityCur = entityList[i];
@@ -360,8 +396,14 @@ public class WhereTheWispsAt : BaseSettingsPlugin<WhereTheWispsAtSettings>
 
     public record WispData(
         List<Entity> Purple,
+        List<Entity> PurpleMed,
+        List<Entity> PurpleBig,
         List<Entity> Yellow,
+        List<Entity> YellowMed,
+        List<Entity> YellowBig,
         List<Entity> Blue,
+        List<Entity> BlueMed,
+        List<Entity> BlueBig,
         List<Entity> LightBomb,
         List<Entity> Wells,
         List<Entity> FuelRefill,
