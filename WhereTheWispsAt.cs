@@ -53,11 +53,11 @@ public class WhereTheWispsAt : BaseSettingsPlugin<WhereTheWispsAtSettings>
                                                            && animated.BaseAnimatedObjectEntity.TryGetComponent(
                                                                out AnimationController animationController) &&
                                                            animationController.CurrentAnimationId == 2).ToList();
-        fuelsToRemove.ForEach(f=>RemoveEntityFromList(f,Wisps.FuelRefill));
+        fuelsToRemove.ForEach(f => RemoveEntityFromList(f, Wisps.FuelRefill));
 
         var shrinesToRemove = Wisps.GoodShrines.Where(s => !s.IsTargetable).ToList();
-        shrinesToRemove.ForEach(s=>RemoveEntityFromList(s,Wisps.GoodShrines));
-        
+        shrinesToRemove.ForEach(s => RemoveEntityFromList(s, Wisps.GoodShrines));
+
         var wellsToRemove = Wisps.Wells.Where(
                                      well => well.TryGetComponent<StateMachine>(out var stateComp) &&
                                              stateComp?.States.Any(x => x.Name == "activated" && x.Value == 1) == true
@@ -175,7 +175,7 @@ public class WhereTheWispsAt : BaseSettingsPlugin<WhereTheWispsAtSettings>
             case "Metadata/MiscellaneousObjects/Azmeri/SacrificeAltarObjects/AzmeriSacrificeAltarBear":
             case "Metadata/MiscellaneousObjects/Azmeri/SacrificeAltarObjects/AzmeriSacrificeAltarRabbit":
             case "Metadata/MiscellaneousObjects/Azmeri/SacrificeAltarObjects/AzmeriSacrificeAltarDeer":
-                var name = metadata[(metadata.LastIndexOf('/')+1)..];
+                var name = metadata[(metadata.LastIndexOf('/') + 1)..];
                 entity.SetHudComponent(name);
                 Wisps.Altars.Add(entity);
                 break;
@@ -309,7 +309,7 @@ public class WhereTheWispsAt : BaseSettingsPlugin<WhereTheWispsAtSettings>
                 ? GameController.IngameState.Data.GetTerrainHeightAt(gridPosNum) : 0;
 
             entityList = entityList.OrderBy(x => x.Id).ToList();
-            
+
 
             var screenSize = new RectangleF
             {
@@ -343,7 +343,7 @@ public class WhereTheWispsAt : BaseSettingsPlugin<WhereTheWispsAtSettings>
                     continue;
                 }
                 var actualSize = size;
-                WispSize wispSize = new WispSize() { Size=0};
+                WispSize wispSize = new WispSize() { Size = 0 };
                 if (actualWispTypes.Contains(type))
                 {
                     var newSize = entityCur.GetHudComponent<WispSize>();
@@ -354,18 +354,18 @@ public class WhereTheWispsAt : BaseSettingsPlugin<WhereTheWispsAtSettings>
                     else
                     {
                         var c = entityCur.GetComponent<Animated>()?.BaseAnimatedObjectEntity?.Metadata;
-                       
+
                         if (c?.Contains("sml") ?? false)
                         {
-                            wispSize.Size = 0;
+                            wispSize.Size = Settings.WispSizeSettings.SmallSize.Value;
                         }
                         else if (c?.Contains("med") ?? false)
                         {
-                            wispSize.Size = 2;
+                            wispSize.Size = Settings.WispSizeSettings.MediumSize.Value;
                         }
                         else if (c?.Contains("big") ?? false)
                         {
-                            wispSize.Size = 4;
+                            wispSize.Size = Settings.WispSizeSettings.LargeSize.Value;
                         }
                         entityCur.SetHudComponent(wispSize);
                     }
@@ -460,7 +460,7 @@ public class WhereTheWispsAt : BaseSettingsPlugin<WhereTheWispsAtSettings>
         return entityPos.X >= leftBound && entityPos.X <= rightBound && entityPos.Y >= topBound &&
                entityPos.Y <= bottomBound;
     }
-    
+
     public bool HideEntity(Entity entity)
     {
         var hideEntity = GameController.PluginBridge.GetMethod<Func<Entity, bool>>("HideEntity");

@@ -7,6 +7,7 @@ namespace WhereTheWispsAt;
 
 public class WhereTheWispsAtSettings : ISettings
 {
+
     public ToggleNode Enable { get; set; } = new ToggleNode(false);
     public ToggleNode DrawRemainingFuel { get; set; } = new ToggleNode(false);
     [Menu("Fuel Remaining Position X")]
@@ -31,6 +32,7 @@ public class WhereTheWispsAtSettings : ISettings
     public ColorNode PurpleWisp { get; set; } = new ColorNode(Color.Purple);
     public RangeNode<int> PurpleSize { get; set; } = new RangeNode<int>(5, 1, 100);
     public ColorNode ChestColor { get; set; } = new ColorNode(Color.White);
+    public WispSizeSettings WispSizeSettings { get; set; } = new();
     public RangeNode<int> ChestSize { get; set; } = new RangeNode<int>(5, 1, 100);
     public RangeNode<int> ChestScreenDisplayMaxDistance { get; set; } = new RangeNode<int>(100, 1, 200);
     public RangeNode<int> ChestAlpha { get; set; } = new RangeNode<int>(127, 0, 255);
@@ -43,4 +45,12 @@ public class WhereTheWispsAtSettings : ISettings
     public ColorNode Dealer { get; set; } = new ColorNode(Color.HotPink);
     public ToggleNode IgnoreFullscreenPanels { get; set; } = new ToggleNode(false);
     public ToggleNode IgnoreLargePanels { get; set; } = new ToggleNode(false);
+}
+
+[Submenu(CollapsedByDefault = true)]
+public class WispSizeSettings
+{
+    public RangeNode<int> SmallSize = new(0, 1, 100);
+    public RangeNode<int> MediumSize = new(2, 1, 100);
+    public RangeNode<int> LargeSize = new(4, 1, 100);
 }
