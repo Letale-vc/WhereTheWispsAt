@@ -51,7 +51,7 @@ public class WhereTheWispsAtSettings : ISettings
 public class WispSizeSettings
 {
     public ToggleNode Enable { get; set; } = new ToggleNode(true);
-    public RangeNode<int> SmallSize = new(0, 1, 100);
-    public RangeNode<int> MediumSize = new(2, 1, 100);
-    public RangeNode<int> LargeSize = new(4, 1, 100);
+    public RangeNode<int> SmallSize { get; set; } = new(0, 1, 100);
+    public RangeNode<int> MediumSize { get; set; } = new(2, 1, 100);
+    public RangeNode<int> LargeSize { get; set; } = new(4, 1, 100);
 }
