@@ -346,29 +346,29 @@ public class WhereTheWispsAt : BaseSettingsPlugin<WhereTheWispsAtSettings>
                 WispSize wispSize = new WispSize() { Size = 0 };
                 if (actualWispTypes.Contains(type))
                 {
-                    var newSize = entityCur.GetHudComponent<WispSize>();
-                    if (newSize != null)
-                    {
-                        wispSize.Size = newSize.Size;
-                    }
-                    else
-                    {
-                        var c = entityCur.GetComponent<Animated>()?.BaseAnimatedObjectEntity?.Metadata;
+                    // var newSize = entityCur.GetHudComponent<WispSize>();
+                    // if (newSize != null)
+                    // {
+                    //     wispSize.Size = newSize.Size;
+                    // }
+                    // else
+                    // {
+                    var c = entityCur.GetComponent<Animated>()?.BaseAnimatedObjectEntity?.Metadata;
 
-                        if (c?.Contains("sml") ?? false)
-                        {
-                            wispSize.Size = Settings.WispSizeSettings.SmallSize.Value;
-                        }
-                        else if (c?.Contains("med") ?? false)
-                        {
-                            wispSize.Size = Settings.WispSizeSettings.MediumSize.Value;
-                        }
-                        else if (c?.Contains("big") ?? false)
-                        {
-                            wispSize.Size = Settings.WispSizeSettings.LargeSize.Value;
-                        }
-                        entityCur.SetHudComponent(wispSize);
+                    if (c?.Contains("sml") ?? false)
+                    {
+                        wispSize.Size = Settings.WispSizeSettings.SmallSize.Value;
                     }
+                    else if (c?.Contains("med") ?? false)
+                    {
+                        wispSize.Size = Settings.WispSizeSettings.MediumSize.Value;
+                    }
+                    else if (c?.Contains("big") ?? false)
+                    {
+                        wispSize.Size = Settings.WispSizeSettings.LargeSize.Value;
+                    }
+                    entityCur.SetHudComponent(wispSize);
+                    // }
                     actualSize += wispSize.Size;
                 }
 
