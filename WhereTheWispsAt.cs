@@ -1,15 +1,14 @@
-﻿using System;
-using ExileCore;
+﻿using ExileCore;
 using ExileCore.PoEMemory;
 using ExileCore.PoEMemory.Components;
 using ExileCore.PoEMemory.MemoryObjects;
 using ExileCore.Shared.Helpers;
 using SharpDX;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using Vector3N = System.Numerics.Vector3;
 using Vector2N = System.Numerics.Vector2;
-using ExileCore.PoEMemory.Elements;
+using Vector3N = System.Numerics.Vector3;
 
 namespace WhereTheWispsAt;
 
@@ -26,12 +25,14 @@ public class WhereTheWispsAt : BaseSettingsPlugin<WhereTheWispsAtSettings>
         Wells,
         FuelRefill,
         Altars,
+        GoodAltars,
         DustConverters,
         Dealer,
         Encounter,
         Shrine,
         Iron
     }
+    private List<string> _goodAltars = new List<string>() { "AzmeriSacrificeAltarBear", "AzmeriSacrificeAltarRabbit", "AzmeriSacrificeAltarDeer" };
 
     public List<string> GoodShrines = new List<string>() { "Acceleration Shrine", "Diamond Shrine",
     "Divine Shrine","Echoing Shrine", "Covetous Shrine", "Impenetrable Shrine"};
@@ -72,7 +73,13 @@ public class WhereTheWispsAt : BaseSettingsPlugin<WhereTheWispsAtSettings>
                                   )
                                   .ToList();
 
+        var goodAltarsToRemove = Wisps.GoodAltar.Where(
+                                      altar => altar.TryGetComponent<StateMachine>(out var stateComp) &&
+                                               stateComp?.States.Any(x => x.Name == "activated" && x.Value == 1) == true
+                                  )
+                                  .ToList();
         altarsToRemove.ForEach(altar => RemoveEntityFromList(altar, Wisps.Altars));
+        goodAltarsToRemove.ForEach(altar => RemoveEntityFromList(altar, Wisps.GoodAltar));
 
         var dustConvertersToRemove = Wisps.DustConverters.Where(
                                               converter => converter.TryGetComponent<StateMachine>(out var stateComp) &&
@@ -171,13 +178,17 @@ public class WhereTheWispsAt : BaseSettingsPlugin<WhereTheWispsAtSettings>
             case "Metadata/Chests/LeagueAzmeri/OmenChest":
                 Wisps.Encounters[entity] = "Omen Chest";
                 break;
-            //case not null when metadata.Contains("Azmeri/SacrificeAltarObjects"):
-            case "Metadata/MiscellaneousObjects/Azmeri/SacrificeAltarObjects/AzmeriSacrificeAltarBear":
-            case "Metadata/MiscellaneousObjects/Azmeri/SacrificeAltarObjects/AzmeriSacrificeAltarRabbit":
-            case "Metadata/MiscellaneousObjects/Azmeri/SacrificeAltarObjects/AzmeriSacrificeAltarDeer":
+            case not null when metadata.Contains("Azmeri/SacrificeAltarObjects"):
                 var name = metadata[(metadata.LastIndexOf('/') + 1)..];
                 entity.SetHudComponent(name);
-                Wisps.Altars.Add(entity);
+                if (_goodAltars.Contains(name))
+                {
+                    Wisps.GoodAltar.Add(entity);
+                }
+                else
+                {
+                    Wisps.Altars.Add(entity);
+                }
                 break;
             case not null when metadata.Contains("Azmeri/AzmeriDustConverter"):
                 Wisps.DustConverters.Add(entity);
@@ -261,8 +272,8 @@ public class WhereTheWispsAt : BaseSettingsPlugin<WhereTheWispsAtSettings>
                      (Wisps.DustConverters, Settings.DustConverters, 0, "Dust Converter", WispType.DustConverters),
                      (Wisps.Dealer, Settings.Dealer, 0, "! TRADER !", WispType.Dealer),
                      (Wisps.GoodShrines, Settings.BlueWisp, 0, string.Empty, WispType.Shrine),
+                     (Wisps.GoodAltar, Settings.GoodAltars, 0, string.Empty, WispType.GoodAltars),
                      //(Wisps.BadShrines, Settings.Altars, 0, string.Empty, WispType.Shrine),
-
                      //(Wisps.Shrines.Where(s=>s.RenderName.Contains("Covetous")&&s.IsTargetable).ToList(), Settings.Dealer, 0, $"COVETOUS", WispType.Shrine),
                       (Wisps.Irons, Settings.Altars, 0, "CRIMSON", WispType.Iron),
                  })
@@ -477,6 +488,7 @@ public class WhereTheWispsAt : BaseSettingsPlugin<WhereTheWispsAtSettings>
         public List<Entity> Wells { get; } = new();
         public List<Entity> FuelRefill { get; } = new();
         public List<Entity> Altars { get; } = new();
+        public List<Entity> GoodAltar { get; } = new();
         public List<Entity> DustConverters { get; } = new();
         public List<Entity> Dealer { get; } = new();
         public List<Entity> Chests { get; } = new();

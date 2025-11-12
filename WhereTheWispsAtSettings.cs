@@ -41,6 +41,7 @@ public class WhereTheWispsAtSettings : ISettings
     public ColorNode Wells { get; set; } = new ColorNode(Color.Orange);
     public ColorNode FuelRefill { get; set; } = new ColorNode(Color.Green);
     public ColorNode Altars { get; set; } = new ColorNode(Color.Red);
+    public ColorNode GoodAltars { get; set; } = new ColorNode(Color.LimeGreen);
     public ColorNode DustConverters { get; set; } = new ColorNode(Color.HotPink);
     public ColorNode Dealer { get; set; } = new ColorNode(Color.HotPink);
     public ToggleNode IgnoreFullscreenPanels { get; set; } = new ToggleNode(false);
