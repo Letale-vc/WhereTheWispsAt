@@ -151,8 +151,11 @@ public class WhereTheWispsAt : BaseSettingsPlugin<WhereTheWispsAtSettings>
             case "Metadata/NPC/League/Affliction/GlyphsHarvestTree":
                 Wisps.Encounters[entity] = "Harvest";
                 break;
-            case "Metadata/MiscellaneousObjects/Azmeri/AzmeriBuffEffigySmall":
+
             case "Metadata/MiscellaneousObjects/Azmeri/AzmeriBuffEffigyMedium":
+                Wisps.Encounters[entity] = "Buff (Dark Gift)";
+                break;
+            case "Metadata/MiscellaneousObjects/Azmeri/AzmeriBuffEffigySmall":
             case "Metadata/MiscellaneousObjects/Azmeri/AzmeriBuffEffigyLarge":
                 Wisps.Encounters[entity] = "Buff";
                 break;
